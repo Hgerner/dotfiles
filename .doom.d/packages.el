@@ -3,8 +3,10 @@
 
 ;; To install a package with Doom you must declare them here and run 'doom sync'
 ;; on the command line, then restart Emacs for the changes to take effect -- or
-;; use 'M-x doom/reload'.
-
+;; use 'M-x doom/reload'
+;; .
+;;(add-to-list 'package-archives
+;;             '("melpa-stable" . "https://stable.melpa.org/packages/") t)
 
 ;; To install SOME-PACKAGE from MELPA, ELPA or emacsmirror:
 ;(package! some-package)
@@ -48,3 +50,7 @@
 ;(unpin! pinned-package another-pinned-package)
 ;; ...Or *all* packages (NOT RECOMMENDED; will likely break things)
 ;(unpin! t)
+
+
+;;(package! ivy-postframe)
+(package! counsel)

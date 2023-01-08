@@ -25,7 +25,7 @@ import Graphics.X11.ExtraTypes.XF86   -- bind media keys
 -- Added by me
 import XMonad.Layout.Spacing
 import XMonad.Util.EZConfig
-
+import XMonad.Layout.IndependentScreens
     -- Layouts modifiers
 import XMonad.Layout.LayoutModifier
 import XMonad.Layout.LimitWindows (limitWindows, increaseLimit, decreaseLimit)
@@ -60,114 +60,82 @@ import XMonad.Util.Run
 import XMonad.Hooks.ManageDocks (avoidStruts, docks, manageDocks, ToggleStruts(..))
 import XMonad.Hooks.StatusBar
 import XMonad.Hooks.StatusBar.PP
+import Graphics.X11.Xinerama (getScreenInfo)
+
+import XMonad.Actions.OnScreen (onlyOnScreen)
+import XMonad.Actions.Warp (warpToScreen)
 
 import qualified XMonad.StackSet as W
 import qualified Data.Map        as M
 
-
 import Colors.GruvboxDark
--- import Colors.DoomOne
 
 main = xmonad
      . ewmhFullscreen
      . ewmh
-     . withEasySB mySB defToggleStrutsKey
+     . dynamicSBs myStatusBarSpawner
      . docks
      $ myConfig
 
-mySB = statusBarProp "xmobar" (pure myPP)
+myStatusBarSpawner :: Applicative f => ScreenId -> f StatusBarConfig
+myStatusBarSpawner (S s) = do
+                    pure $ statusBarPropTo ("_XMONAD_LOG_" ++ show s)
+                          ("xmobar -x " ++ show s ++ " ~/.config/xmobar/xmobar" ++ show s ++ ".hs")
+                          (pure $ myPP (S s))
 
-myPP = xmobarPP
-    { ppCurrent = xmobarColor myBrightYellow "" . wrap "<box type=Bottom width=2> " " </box>"
+myPP :: ScreenId -> PP
+myPP s = filterOutWsPP [scratchpadWorkspaceTag] . marshallPP s $ def
+  { ppCurrent = xmobarColor myBrightYellow "" . wrap "<box type=Bottom width=2> " " </box>"
     , ppHidden  = pad
+    , ppHiddenNoWindows  = pad
     , ppUrgent  = xmobarColor myBrightYellow myRed . wrap " " " "
     , ppSep     = ""
     , ppWsSep   = ""
     , ppTitle   = xmobarColor myBrightGreen "" . pad
-    , ppLayout  = xmobarColor myBrightMagenta ""
+
     }
+
 
 myConfig = withUrgencyHook NoUrgencyHook def
     { terminal           = "alacritty"
     , modMask            = mod4Mask
-    , borderWidth        = 2
+    , borderWidth        = 5
     , normalBorderColor  = myBrightBlack
-    , focusedBorderColor = myBrightYellow
-    , workspaces         = [ "q", "m", "d", "t", "n", "s", "v", "w", "x", "y", "z" ]
+    , focusedBorderColor = myBrightRed
+    , workspaces         = withScreens 2 [ "code", "shell", "comms", "web", "media" ]
     , startupHook        = myStartupHook
     , manageHook         = myManageHook
     , layoutHook         = myLayoutHook
     , keys               = myKeys
     , logHook            = myLogHook
-    , handleEventHook        = myEventHook
-    }
-    --`additionalKeysP` myKeys
+    , handleEventHook    = myEventHook
+    } `additionalKeysP` myAdditionalKeys
     -- `additionalMouseBindings` myButtons
 
 myFont = "xft:Dina:size=12"
 
--- defaults = def {
---       -- simple stuff
---         terminal           = myTerminal,
---         focusFollowsMouse  = myFocusFollowsMouse,
---         clickJustFocuses   = myClickJustFocuses,
---         borderWidth        = myBorderWidth,
---         modMask            = myModMask,
---         workspaces         = myWorkspaces,
---         normalBorderColor  = myNormalBorderColor,
---         focusedBorderColor = myFocusedBorderColor,
+-- The preferred default programs, which is used in a binding below and by
 --
---       -- key bindings
---         keys               = myKeys,
---         mouseBindings      = myMouseBindings,
---
---       -- hooks, layouts
---         layoutHook         = myLayoutHook,
---         manageHook         = myManageHook,
---         handleEventHook    = myEventHook,
---         logHook            = myLogHook,
---         startupHook        = myStartupHook
---     }
+myBrowser :: String
+myBrowser      = "qutebrowser "  -- Sets qutebrowser as browser
 
+myMusicplayer :: String
+myMusicplayer  = "spotify"
 
+myEditor :: String
+myEditor       = "emacsclient -c"
 
--- ==========
---  Projects
--- ==========
+myTerminal :: String
+myTerminal     = "alacritty"
 
--- projects =
---     [ Project { projectName = "m"
---               , projectDirectory = "~/"
---               , projectStartHook = Just $ do spawn "tmux has-session -t neomutt || st -c neomutt -e tmux new -s neomutt neomutt"
---               }
---
---     , Project { projectName = "t"
---               , projectDirectory = "~/"
---               , projectStartHook = Just $ do spawn "tmux has-session -t scratchpad || st -c scratchpad -e tmux new -s scratchpad"
---               }
---
---     , Project { projectName = "w"
---               , projectDirectory = "~/"
---               , projectStartHook = Just $ do spawn "tmux has-session -t work || st -c work -e tmux new -s work"
---               }
---
---     , Project { projectName = "n"
---               , projectDirectory = "~/"
---               , projectStartHook = Just $ do spawn "st -e newsboat"
---               }
---     ]
+myComms :: String
+myComms        = "discord"
 
-
--- The preferred terminal program, which is used in a binding below and by
--- certain contrib modules.
---
-myTerminal      = "alacritty"
-
-
+myApplauncher :: String
+myApplauncher  = "dmenu_run"
 
 windowCount :: X (Maybe String)
 windowCount = gets $ Just . show . length . W.integrate' . W.stack . W.workspace . W.current . windowset
-
 
 -- Whether focus follows the mouse pointer.
 myFocusFollowsMouse :: Bool
@@ -181,124 +149,67 @@ myClickJustFocuses = False
 --
 myBorderWidth   = 3
 
--- modMask lets you specify which modkey you want to use. The default
--- is mod1Mask ("left alt").  You may also consider using mod3Mask
--- ("right alt"), which does not conflict with emacs keybindings. The
--- "windows key" is usually mod4Mask.
---
 myModMask       = mod4Mask
-
--- The default number of workspaces (virtual screens) and their names.
--- By default we use numeric strings, but any string may be used as a
--- workspace name. The number of workspaces is determined by the length
--- of this list.
---
--- A tagging example:
---
--- > workspaces = ["web", "irc", "code" ] ++ map show [4..9]
---
-myWorkspaces    = ["code","shell","music","web","irq","6","7","8","9"]
 
 -- Border colors for unfocused and focused windows, respectively.
 --
 myNormalBorderColor  = "#dddddd"
 myFocusedBorderColor = "#ff0000"
 
+
+myAdditionalKeys :: [(String, X ())]
+myAdditionalKeys =
+    [
+      ("M-S-q",                kill)
+    , ("M-C-<Space>",          sendMessage (MT.Toggle NBFULL))
+    --, ("M-S-<Space>",        setLayout $ XMonad.layoutHook conf)
+    , ("M-C-n",                refresh)
+    , ("M-C-<Tab>",            sendMessage NextLayout)
+
+-- Window control
+    , ("M-C-<Down>",           windows W.focusDown)
+    , ("M-C-<Up>",             windows W.focusUp)
+    , ("M-C-S-<Down>",         windows W.swapDown)
+    , ("M-C-S-<Up>",           windows W.swapUp)
+    , ("M-C-<Left>",           windows W.focusMaster)
+    --, ("M-C-<Right>",          windows W.focus)
+    , ("M-C-<Backspace>",      windows W.swapMaster)
+    , ("M-C-m",                sendMessage Expand)
+    , ("M-C-k",                sendMessage Shrink)
+    , ("M-C-t",                withFocused $ windows . W.sink)
+    , ("M-comma",              sendMessage (IncMasterN 1))
+    , ("M-period",             sendMessage (IncMasterN (-1)))
+    , ("M-S-x",                io (exitWith ExitSuccess))
+    , ("M-q",                  spawn "killall xmobar; xmonad --recompile; xmonad --restart")
+
+-- Applications
+    , ("M-j",                  spawn myEditor)
+    , ("M-l",                  spawn myTerminal)
+    , ("M-u",                  spawn myComms)
+    , ("M-y",                  spawn myBrowser)
+    , ("M-'",                  spawn myMusicplayer)
+    , ("M-C-<Return>",         spawn myTerminal)
+    , ("M-S-C-<Return>",       spawn myApplauncher)
+    ]
 ------------------------------------------------------------------------
 -- Key bindings. Add, modify or remove key bindings here.
 --
 myKeys conf@(XConfig {XMonad.modMask = modm}) = M.fromList $
-    -- launch a terminal
-    [
-    ((modm,               xK_Return), spawn $ XMonad.terminal conf)
-
-    -- launch dmenu
-    , ((modm .|. shiftMask,               xK_Return     ), spawn "dmenu_run")
-
-    -- launch gmrun
-    -- , ((modm .|. shiftMask, xK_p     ), spawn "gmrun")
-
-    -- close focused window
-    , ((modm .|. shiftMask, xK_q     ), kill)
-
-     -- Rotate through the available layout algorithms
-    , ((modm,               xK_space ), sendMessage (MT.Toggle NBFULL) >> sendMessage ToggleStruts)
-
-    --  Reset the layouts on the current workspace to default
-    , ((modm .|. shiftMask, xK_space ), setLayout $ XMonad.layoutHook conf)
-
-    -- Resize viewed windows to the correct size
-    , ((modm,               xK_n     ), refresh)
-
-    -- Move focus to the next window
-    , ((modm,               xK_Tab   ), sendMessage NextLayout)
-
-    -- Move focus to the next window
-    , ((modm,               xK_Down     ), windows W.focusDown)
-
-    -- Move focus to the previous window
-    , ((modm,               xK_Up     ), windows W.focusUp  )
-
-    -- Move focus to the master window
-    , ((modm,               xK_Left     ), windows W.focusMaster  )
-
-    -- Swap the focused window and the master window
-    --, ((modm .|. shiftMask, xK_Return), windows W.swapMaster )
-
-    -- Swap the focused window with the next window
-    , ((modm .|. shiftMask, xK_Down     ), windows W.swapDown  )
-
-    -- Swap the focused window with the previous window
-    , ((modm .|. shiftMask, xK_Up     ), windows W.swapUp    )
-
-    -- Shrink the master area
-    , ((modm,               xK_l     ), sendMessage Shrink)
-
-    -- Expand the master area
-    , ((modm,               xK_u     ), sendMessage Expand)
-
-    -- Push window back into tiling
-    , ((modm,               xK_t     ), withFocused $ windows . W.sink)
-
-    -- Increment the number of windows in the master area
-    , ((modm              , xK_comma ), sendMessage (IncMasterN 1))
-
-    -- Deincrement the number of windows in the master area
-    , ((modm              , xK_period), sendMessage (IncMasterN (-1)))
-
-    -- Toggle the status bar gap
-    -- Use this binding with avoidStruts from Hooks.ManageDocks.
-    -- See also the statusBar function from Hooks.DynamicLog.
     --
-    -- , ((modm              , xK_b     ), sendMessage ToggleStruts)
-
-    -- Quit xmonad
-    , ((modm .|. shiftMask, xK_x     ), io (exitWith ExitSuccess))
-
-    -- Restart xmonad
-    , ((modm              , xK_q     ), spawn "xmonad --recompile; xmonad --restart")
-
-    -- Run xmessage with a summary of the default keybindings (useful for beginners)
-    , ((modm .|. shiftMask, xK_slash ), spawn ("echo \"" ++ help ++ "\" | xmessage -file -"))
-    ]
-    ++
-
-    --
-    -- mod-[1..9], Switch to workspace N
+    -- mod-[1..9], Switch to workpace N
     -- mod-shift-[1..9], Move client to workspace N
     --
-    [((m .|. modm, k), windows $ f i)
-        | (i, k) <- zip (XMonad.workspaces conf) [xK_1 .. xK_9]
+    [((m .|. modm, k), windows $ onCurrentScreen f i)
+        | (i, k) <- zip (workspaces' conf) [xK_1 .. xK_9]
         , (f, m) <- [(W.greedyView, 0), (W.shift, shiftMask)]]
-
     --
-    -- mod-{Left,Right}, Switch to physical/Xinerama screens 1, 2, or 3
-    -- mod-shift-{Left,Right}, Move client to screen 1, 2, or 3
+    -- mod-S-C-{1, 2, 3},   Switch to physical/Xinerama screens 1, 2, or 3
+    -- mod-S-C-A-{1, 2, 3}, Move client to screen 1, 2, or 3
     --
     ++
     [((m .|. modm, key), screenWorkspace sc >>= flip whenJust (windows . f))
-        | (key, sc) <- zip [xK_Left, xK_Right, xK_y] [0..]
-        , (f, m) <- [(W.view, 0), (W.shift, shiftMask)]]
+        | (key, sc) <- zip [xK_1, xK_2, xK_3] [0..]
+        , (f, m) <- [(W.view, shiftMask .|. controlMask), (W.shift, shiftMask .|. controlMask .|. mod1Mask)]]
 
 
 ------------------------------------------------------------------------
@@ -331,7 +242,7 @@ myMouseBindings (XConfig {XMonad.modMask = modm}) = M.fromList $
 -- The available layouts.  Note that each layout is separated by |||,
 -- which denotes layout choice.
 --
-myLayoutHook = spacing 5 $ avoidStruts $ mkToggle (NOBORDERS ?? NBFULL ?? EOT) (Mirror tiled ||| tiled ||| Full)
+myLayoutHook = spacing 2 $ avoidStruts $ mkToggle (NOBORDERS ?? NBFULL ?? EOT) (Mirror tiled ||| tiled ||| Full)
   where
      -- default tiling algorithm partitions the screen into two panes
      tiled   = Tall nmaster delta ratio
@@ -396,54 +307,9 @@ myLogHook = return ()
 myStartupHook = do
               spawnOnce "nitrogen --restore &"
               spawnOnce "compton &"
-              spawn "/usr/bin/emacs --daemon" -- emacs daemon for the emacsclient
+              spawn "/usr/local/bin/emacs --daemon" -- emacs daemon for the emacsclient
+              spawn "/usr/share/lightdmxrandr.sh"
 ------------------------------------------------------------------------
-
--- ========
---  Basics
--- ========
-
-
-
--- Now run xmonad with all the defaults we set up.
--- Run xmonad with the settings you specify. No need to modify this.
---
--- main = do
---     xmproc <- spawnPipe "xmobar -x 0 /home/hakan/.config/xmobar/xmobar.config"
---     xmonad $docks defaults
-
---        { logHook = dynamicLogWithPP $ xmobarPP
---           { ppOutput = \x -> hPutStrLn xmproc x   -- xmobar on monitor 1
---           , ppCurrent = xmobarColor color06 "" . wrap
---                         ("<box type=Bottom width=2 mb=2 color=" ++ color06 ++ ">") "</box>"
---             -- Visible but not current workspace
---           , ppVisible = xmobarColor color06 ""
---             -- Hidden workspace
---           , ppHidden = xmobarColor color05 "" . wrap
---                        ("<box type=Top width=2 mt=2 color=" ++ color05 ++ ">") "</box>"
---             -- Hidden workspaces (no windows)
---           , ppHiddenNoWindows = xmobarColor color05 ""
---             -- Title of active window
---           , ppTitle = xmobarColor color16 "" . shorten 60
---             -- Separator character
---           , ppSep =  "<fc=" ++ color09 ++ "> <fn=1>|</fn> </fc>"
---             -- Urgent workspace
---           , ppUrgent = xmobarColor color02 "" . wrap "!" "!"
---             -- Adding # of windows on current workspace to the bar
---           , ppExtras  = [windowCount]
---             -- order of things in xmobar
---           , ppOrder  = \(ws:l:t:ex) -> [ws,l]++ex++[t]
---           }
---       }
-
--- A structure containing your configuration settings, overriding
--- fields in the default config. Any you don't override, will
--- use the defaults defined in xmonad/XMonad/Config.hs
---
--- No need to modify this.
---
-
-
 
 -- | Finally, a copy of the default bindings in simple textual tabular format.
 help :: String
