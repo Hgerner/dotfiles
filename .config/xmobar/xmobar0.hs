@@ -16,7 +16,7 @@ Config { font = "xft:Ubuntu Mono:pixelsize=16:antialias=true:hinting=true"
        , allDesktops = True
        , overrideRedirect = True
        , commands = [
-             Run UnsafeXPropertyLog "_XMONAD_LOG_0"
+             Run UnsafeStdinReader --Run UnsafeXPropertyLog
            , Run Network "enp34s0" ["-L","0","-H","32",
                                  "--normal","green","--high","red"] 10
            , Run Cpu ["-L","3","-H","50",
@@ -28,5 +28,5 @@ Config { font = "xft:Ubuntu Mono:pixelsize=16:antialias=true:hinting=true"
                     ]
        , sepChar = "%"
        , alignSep = "}{"
-       , template = "%_XMONAD_LOG_0% } { %cpu% | %memory% | %enp34s0% | <fc=#ee9a00>%date%</fc>"
+       , template = "%UnsafeStdinReader% } { %cpu% | %memory% | %enp34s0% | <fc=#ee9a00>%date%</fc>"
 	}
