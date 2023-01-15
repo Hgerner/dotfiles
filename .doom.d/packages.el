@@ -54,3 +54,5 @@
 
 ;;(package! ivy-postframe)
 (package! counsel)
+(package! beacon)
+(package! yasnippet)
