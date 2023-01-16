@@ -62,6 +62,17 @@
  projectile-project-search-path '("~/github/yocto/poky", "~/.config/")
  )
 
+(defun my/prelude-copy-filepath-clipboard ()
+  "Copy the current buffer file name to the clipboard."
+  (interactive)
+  (let ((filename (if (equal major-mode 'dired-mode)
+                      default-directory
+                    (buffer-file-name))))
+    (when filename
+      (kill-new filename))
+    (message filename)))
+
+
 ;; Whenever you reconfigure a package, make sure to wrap your config in an
 ;; `after!' block, otherwise Doom's defaults may override your settings. E.g.
 ;;
