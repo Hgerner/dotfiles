@@ -41,7 +41,6 @@
 ;; change `org-directory'. It must be set before org loads!
 (setq org-directory "~/org/")
 
-
 (setq
  doom-font (font-spec :family "Ubuntu Mono" :size 20)
  doom-variable-pitch-font (font-spec :family "Ubuntu" :size 20))
@@ -75,7 +74,7 @@
 
 (require 'yasnippet)
 (yas-global-mode 1)
-
+(blink-cursor-mode 1)
 (beacon-mode 1)
 
 (org-babel-do-load-languages 'org-babel-load-languages '((shell . t)))
@@ -92,6 +91,54 @@
         (dired-sort-toggle-or-edit)))
 
 
+(org-babel-do-load-languages
+  'org-babel-load-languages
+  '((emacs-lisp . t)
+    (python . t)
+    (shell . t)))
+
+
+
+
+;; Configure the Modus Themes' appearance
+(setq modus-themes-mode-line '(accented borderless)
+      modus-themes-bold-constructs t
+      modus-themes-italic-constructs t
+      modus-themes-fringes 'subtle
+      modus-themes-tabs-accented t
+      modus-themes-syntax '(alt-syntax)
+      modus-themes-paren-match '(bold intense)
+      modus-themes-prompts '(bold intense)
+      modus-themes-completions 'opinionated
+      modus-themes-org-blocks 'tinted-background
+;;      modus-themes-scale-headings y
+      modus-themes-region '(bg-only)
+      modus-themes-headings
+      '((1 . (rainbow overline background 1.4))
+        (2 . (rainbow background 1.3))
+        (3 . (rainbow bold 1.2))
+        (t . (semilight 1.1))))
+
+
+(load-theme ' modus-vivendi-tinted t)
+
+
+;;;; This is needed as of Org 9.2
+;;(setup org-tempo
+;;  (:when-loaded
+;;    (add-to-list 'org-structure-template-alist '("sh" . "src sh"))
+;;    (add-to-list 'org-structure-template-alist '("el" . "src emacs-lisp"))
+;;    (add-to-list 'org-structure-template-alist '("li" . "src lisp"))
+;;    (add-to-list 'org-structure-template-alist '("sc" . "src scheme"))
+;;    (add-to-list 'org-structure-template-alist '("ts" . "src typescript"))
+;;    (add-to-list 'org-structure-template-alist '("py" . "src python"))
+;;    (add-to-list 'org-structure-template-alist '("go" . "src go"))
+;;    (add-to-list 'org-structure-template-alist '("yaml" . "src yaml"))
+;;    (add-to-list 'org-structure-template-alist '("json" . "src json"))))
+
+;; (setq org-confirm-babel-evaluate nil)
+
+>>>>>>> e78c01c57965a04b3143baa80f470deccbbddfcf
 ;; Whenever you reconfigure a package, make sure to wrap your config in an
 ;; `after!' block, otherwise Doom's defaults may override your settings. E.g.
 ;;

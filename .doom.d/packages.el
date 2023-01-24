@@ -56,3 +56,4 @@
 (package! counsel)
 (package! beacon)
 (package! yasnippet)
+(package! modus-themes)
