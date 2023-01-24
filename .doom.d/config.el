@@ -78,6 +78,20 @@
 
 (beacon-mode 1)
 
+(org-babel-do-load-languages 'org-babel-load-languages '((shell . t)))
+
+(setq max-specpdl-size 13000)
+
+(setq-default indent-tabs-mode nil)
+(setq-default tab-width 4)
+(setq indent-line-function 'insert-tab)
+
+(add-hook 'dired-mode-hook
+      (lambda ()
+        (dired-hide-details-mode)
+        (dired-sort-toggle-or-edit)))
+
+
 ;; Whenever you reconfigure a package, make sure to wrap your config in an
 ;; `after!' block, otherwise Doom's defaults may override your settings. E.g.
 ;;
