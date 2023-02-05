@@ -57,3 +57,4 @@
 (package! beacon)
 (package! yasnippet)
 (package! modus-themes)
+;;(package! tree-sitter-langs)
