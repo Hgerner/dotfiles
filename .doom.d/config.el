@@ -42,8 +42,8 @@
 (setq org-directory "~/org/")
 
 (setq
- doom-font (font-spec :family "Ubuntu Mono" :size 20)
- doom-variable-pitch-font (font-spec :family "Ubuntu" :size 20))
+ doom-font (font-spec :family "Ubuntu Mono" :size 18)
+ doom-variable-pitch-font (font-spec :family "Ubuntu" :size 18))
 
 (after! doom-themes--colors
   (setq doom-themes-enable-bold t
@@ -83,22 +83,18 @@
 
 (setq-default indent-tabs-mode nil)
 (setq-default tab-width 4)
-(setq indent-line-function 'insert-tab)
+;; (setq indent-line-function 'insert-tab)
 
 (add-hook 'dired-mode-hook
       (lambda ()
         (dired-hide-details-mode)
         (dired-sort-toggle-or-edit)))
 
-
 (org-babel-do-load-languages
   'org-babel-load-languages
   '((emacs-lisp . t)
     (python . t)
     (shell . t)))
-
-
-
 
 ;; Configure the Modus Themes' appearance
 (setq modus-themes-mode-line '(accented borderless)
@@ -138,7 +134,6 @@
 
 ;; (setq org-confirm-babel-evaluate nil)
 
->>>>>>> e78c01c57965a04b3143baa80f470deccbbddfcf
 ;; Whenever you reconfigure a package, make sure to wrap your config in an
 ;; `after!' block, otherwise Doom's defaults may override your settings. E.g.
 ;;
