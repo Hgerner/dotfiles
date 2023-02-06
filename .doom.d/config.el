@@ -72,8 +72,8 @@
 
 (set-face-attribute 'lazy-highlight nil :foreground "black" :background "green")
 
-(require 'yasnippet)
-(yas-global-mode 1)
+;;(require 'yasnippet)
+;;(yas-global-mode 1)
 (blink-cursor-mode 1)
 (beacon-mode 1)
 
@@ -96,28 +96,98 @@
     (python . t)
     (shell . t)))
 
-;; Configure the Modus Themes' appearance
-(setq modus-themes-mode-line '(accented borderless)
-      modus-themes-bold-constructs t
-      modus-themes-italic-constructs t
-      modus-themes-fringes 'subtle
-      modus-themes-tabs-accented t
-      modus-themes-syntax '(alt-syntax)
-      modus-themes-paren-match '(bold intense)
-      modus-themes-prompts '(bold intense)
-      modus-themes-completions 'opinionated
-      modus-themes-org-blocks 'tinted-background
-;;      modus-themes-scale-headings y
-      modus-themes-region '(bg-only)
-      modus-themes-headings
-      '((1 . (rainbow overline background 1.4))
-        (2 . (rainbow background 1.3))
-        (3 . (rainbow bold 1.2))
-        (t . (semilight 1.1))))
+(defconst my-c-style
+    '((c-recognize-knr-p          . nil)
+      (c-tab-always-indent        . t)
+      (c-basic-offset             . 4)
+      (c-comment-only-line-offset . 0)
+      (c-hanging-braces-alist     . ((block-close . c-snug-do-while)
+                                     (brace-entry-open)
+                                     (brace-list-close)
+                                     (brace-list-open after)
+                                     (brace-list-intro)
+                                     (class-open after)
+                                     (class-close before)
+                                     (extern-lang-open after)
+                                     (inexpr-class-open after)
+                                     (inexpr-class-close before)
+                                     (inline-open after)
+                                     (inline-close before)
+                                     (statement-cont)
+                                     (substatement-open after)))
+      (c-hanging-colons-alist     . ((member-init-intro before)
+                                     (inher-intro)
+                                     (case-label after)
+                                     (label after)
+                                     (access-label after)))
+      (c-cleanup-list             . (scope-operator
+                                     empty-defun-braces
+                                     defun-close-semi))
+      (c-offsets-alist            . ((access-label . -)
+                                     (brace-list-close . 0)
+                                     (brace-list-entry . 0)
+                                     (brace-list-intro . +)
+                                     (class-close . 0)
+                                     (class-open . 0)
+                                     (defun-block-intro . +)
+                                     (defun-close . 0)
+                                     (defun-open . 0)
+                                     (inclass . +)
+                                     (label . 0)
+                                     (statement . 0)
+                                     (statement-cont . *)
+                                     (topmost-intro-cont . 0)
+                                     (arglist-close . c-lineup-arglist)
+                                     (block-open . 0)
+                                     (case-label . +)
+                                     (func-decl-cont . c-lineup-java-throws)
+                                     (inexpr-class . 0)
+                                     (inher-cont . c-lineup-java-inher)
+                                     (inline-open . 0)
+                                     (substatement-open . 0)
+                                     (innamespace . 0)
+                                     ))
+      (c-echo-syntactic-information-p . t))
+    "My C Programming Style")
+;; Offset customizations not in my-c-style
+(setq c-offsets-alist '((member-init-intro . ++)))
+;; Customizations for all modes in CC Mode.
+(defun my-c-mode-common-hook ()
+  ;; add my personal style and set it for the current buffer
+  (c-add-style "PERSONAL" my-c-style t)
+  ;; other customizations
+  (setq tab-width 4)
+  ;; we like auto-newline and hungry-delete
+  (c-toggle-auto-hungry-state 1)
+  ;; keybindings for all supported languages.  We can put these in
+  ;; c-mode-base-map because c-mode-map, c++-mode-map, objc-mode-map,
+  ;; java-mode-map, idl-mode-map, and pike-mode-map inherit from it.
+  (define-key c-mode-base-map "\C-m" 'newline-and-indent)
+  (define-key c-mode-base-map "\M-a" 'backward-sexp)
+  (define-key c-mode-base-map "\M-e" 'forward-sexp)
+  )
 
+(add-hook 'c-mode-common-hook 'my-c-mode-common-hook)
+(setq c++-mode-hook
+      '(lambda ()
+         (font-lock-mode 1)
+         ))
+(setq java-mode-hook
+      '(lambda ()
+         (font-lock-mode 1)
+         ))
 
-(load-theme ' modus-vivendi-tinted t)
+(setq-default indent-tabs-mode nil)
+(setq-default tab-width 4)
+(setq indent-line-function 'insert-tab)
 
+(use-package! tree-sitter
+  :config
+  (require 'tree-sitter-langs)
+  (global-tree-sitter-mode)
+  (add-hook 'tree-sitter-after-on-hook #'tree-sitter-hl-mode))
+
+(setq doom-theme 'doom-moonlight)
 
 ;;;; This is needed as of Org 9.2
 ;;(setup org-tempo
