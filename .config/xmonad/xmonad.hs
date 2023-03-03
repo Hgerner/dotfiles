@@ -53,9 +53,8 @@ import XMonad.Actions.WindowGo (runOrRaise)
 import XMonad.Actions.WithAll (sinkAll, killAll)
 import qualified XMonad.Actions.Search as S
 
-
-
 import XMonad.Util.SpawnOnce
+import XMonad.Actions.SpawnOn
 import XMonad.Util.Run
 import XMonad.Hooks.ManageDocks (avoidStruts, docks, manageDocks, ToggleStruts(..))
 import XMonad.Hooks.StatusBar
@@ -77,40 +76,37 @@ main = do
   xmonad $ docks $ ewmh $ ewmhFullscreen $ withUrgencyHook NoUrgencyHook def
     { terminal           = "alacritty"
     , modMask            = mod4Mask
-    , borderWidth        = 5
-    , normalBorderColor  = myBrightBlack
-    , focusedBorderColor = myBrightRed
+    , borderWidth        = myBorderWidth
+    , normalBorderColor  = myNormalBorderColor
+    , focusedBorderColor = myFocusedBorderColor
     , workspaces         = myWorkspaces
     , handleEventHook    = myEventHook
     , startupHook        = myStartupHook
-    , manageHook         = myManageHook
+    , manageHook         = manageSpawn <> myManageHook
     , layoutHook         = myLayoutHook
     , keys               = myKeys
     , logHook            = dynamicLogWithPP $  filterOutWsPP [scratchpadWorkspaceTag] $ xmobarPP
         { ppOutput = \x -> hPutStrLn mySB0 x   -- xmobar on monitor 1
                         >> hPutStrLn mySB1 x   -- xmobar on monitor 2
                         >> hPutStrLn mySB2 x   -- xmobar on monitor 3
+        , ppCurrent = xmobarColor myBrightYellow "" . wrap "<box type=Bottom width=2> " " </box>"
+        , ppVisible = xmobarColor myBlue "" . wrap "<box type=Bottom width=2> " " </box>"
+        , ppHidden  = xmobarColor myBrightRed "" . pad
+        , ppHiddenNoWindows = xmobarColor myBrightRed "" . pad
+        , ppUrgent  = xmobarColor myBrightYellow myRed . wrap " " " "
+        , ppSep     = ""
+        , ppWsSep   = ""
+        , ppTitle   = xmobarColor myBrightGreen "" . pad
+        , ppLayout  = xmobarColor myBrightMagenta ""
         }
     } `additionalKeysP` myAdditionalKeys
-
-
-myPP = xmobarPP
-    { ppCurrent = xmobarColor myBrightYellow "" . wrap "<box type=Bottom width=2> " " </box>"
-    , ppHidden  = pad
-    , ppUrgent  = xmobarColor myBrightYellow myRed . wrap " " " "
-    , ppSep     = ""
-    , ppWsSep   = ""
-    , ppTitle   = xmobarColor myBrightGreen "" . pad
-    , ppLayout  = xmobarColor myBrightMagenta ""
-    }
 
 
 myFont = "xft:Dina:size=12"
 
 -- The preferred default programs, which is used in a binding below and by
---
 myBrowser :: String
-myBrowser      = "qutebrowser "  -- Sets qutebrowser as browser
+myBrowser      = "firefox"  -- Sets qutebrowser as browser
 
 myMusicplayer :: String
 myMusicplayer  = "spotify"
@@ -127,10 +123,9 @@ myComms        = "discord"
 myApplauncher :: String
 myApplauncher  = "dmenu_run"
 
-
 -- Other configuration options
 myWorkspaces :: [ String ]
-myWorkspaces = [ "code", "shell", "comms", "web", "media" ]
+myWorkspaces = [ "1: emacs", "2: shell", "3: comms", "4: web", "5: media" ]
 
 windowCount :: X (Maybe String)
 windowCount = gets $ Just . show . length . W.integrate' . W.stack . W.workspace . W.current . windowset
@@ -143,15 +138,11 @@ myClickJustFocuses = False
 
 -- Width of the window border in pixels.
 --
-myBorderWidth   = 3
+myBorderWidth   = 5
+myNormalBorderColor  = myBrightBlack
+myFocusedBorderColor = myBrightYellow
 
 myModMask       = mod4Mask
-
--- Border colors for unfocused and focused windows, respectively.
---
-myNormalBorderColor  = "#dddddd"
-myFocusedBorderColor = "#ff0000"
-
 
 myAdditionalKeys :: [(String, X ())]
 myAdditionalKeys =
@@ -179,11 +170,11 @@ myAdditionalKeys =
     , ("M-q",                  spawn "killall xmobar; xmonad --recompile; xmonad --restart")
 
 -- Applications
-    , ("M-j",                  spawn myEditor)
+    , ("M-e",                  spawn myEditor)
     , ("M-l",                  spawn myTerminal)
-    , ("M-u",                  spawn myComms)
-    , ("M-y",                  spawn myBrowser)
-    , ("M-'",                  spawn myMusicplayer)
+    , ("M-d",                  spawn myComms)
+    , ("M-b",                  spawn myBrowser)
+    , ("M-s",                  spawn myMusicplayer)
     , ("M-C-<Return>",         spawn myTerminal)
     , ("M-S-C-<Return>",       spawn myApplauncher)
     ]
@@ -240,7 +231,7 @@ myMouseBindings (XConfig {XMonad.modMask = modm}) = M.fromList $
 --
 myLayoutHook = spacing 2
                $ avoidStruts
-               $ mkToggle (NOBORDERS ?? NBFULL ?? EOT) (Mirror tiled ||| tiled)
+               $ mkToggle (NOBORDERS ?? NBFULL ?? EOT) (tiled ||| Mirror tiled)
   where
      -- default tiling algorithm partitions the screen into two panes
      tiled   = Tall nmaster delta ratio
@@ -273,7 +264,11 @@ myManageHook = composeAll
     [ className =? "MPlayer"        --> doFloat
     , className =? "Gimp"           --> doFloat
     , resource  =? "desktop_window" --> doIgnore
-    , resource  =? "kdesktop"       --> doIgnore ]
+    , resource  =? "kdesktop"       --> doIgnore
+    , className  =?  "emacsclient" --> doShift (myWorkspaces !! 0 )
+    , className  =?  "discord" --> doShift (myWorkspaces !! 2 )
+    , className  =?  "firefox" --> doShift (myWorkspaces !! 3 )
+    , className  =?  "spotify" --> doShift (myWorkspaces !! 3 )]
 
 ------------------------------------------------------------------------
 -- Event handling
@@ -291,3 +286,10 @@ myStartupHook = do
               spawnOnce "compton &"
               spawn "/usr/local/bin/emacs --daemon" -- emacs daemon for the emacsclient
               spawn "/usr/share/lightdmxrandr.sh"
+              -- spawnOn "code" myEditor
+              -- spawnOn "shell" myTerminal
+              -- spawnOn "shell" myTerminal
+              -- spawnOn "shell" myTerminal
+              -- spawnOn "comms" myComms
+              -- spawnOn "web" myBrowser
+              -- spawnOn "media" myMusicplayer
