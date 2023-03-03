@@ -58,3 +58,4 @@
 (package! yasnippet)
 (package! modus-themes)
 ;;(package! tree-sitter-langs)
+(package! vertico)
