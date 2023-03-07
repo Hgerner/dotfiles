@@ -89,8 +89,8 @@ main = do
         { ppOutput = \x -> hPutStrLn mySB0 x   -- xmobar on monitor 1
                         >> hPutStrLn mySB1 x   -- xmobar on monitor 2
                         >> hPutStrLn mySB2 x   -- xmobar on monitor 3
-        , ppCurrent = xmobarColor myBrightYellow "" . wrap "<box type=Bottom width=2> " " </box>"
-        , ppVisible = xmobarColor myBlue "" . wrap "<box type=Bottom width=2> " " </box>"
+        , ppCurrent = xmobarColor myBrightYellow "" . wrap "<box width=1> " " </box>"
+        , ppVisible = xmobarColor myBlue "" . wrap "<box width=1> " " </box>"
         , ppHidden  = xmobarColor myBrightRed "" . pad
         , ppHiddenNoWindows = xmobarColor myBrightRed "" . pad
         , ppUrgent  = xmobarColor myBrightYellow myRed . wrap " " " "
@@ -138,8 +138,8 @@ myClickJustFocuses = False
 
 -- Width of the window border in pixels.
 --
-myBorderWidth   = 5
-myNormalBorderColor  = myBrightBlack
+myBorderWidth   = 3
+myNormalBorderColor  = myBlack
 myFocusedBorderColor = myBrightYellow
 
 myModMask       = mod4Mask

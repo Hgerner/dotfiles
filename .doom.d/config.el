@@ -29,17 +29,17 @@
 ;; refresh your font settings. If Emacs still can't find your font, it likely
 ;; wasn't installed correctly. Font issues are rarely Doom issues!
 
-(defvar cm-ac-enable t
-  "enable cm auto complete on TAB")
-
-(defvar cm-ac-menu-lines 20
-  "enable cm auto complete on TAB")
-
-(set-variable 'load-path (append load-path (list nil (substitute-in-file-name "$CM_UNIX_HOME/emacs"))))
-(load-library "cm")
-(load-library "cm-hide")
-
-(setq cm-ac-menu-lines 10)
+;; (defvar cm-ac-enable t
+;;   "enable cm auto complete on TAB")
+;; 
+;; (defvar cm-ac-menu-lines 20
+;;   "enable cm auto complete on TAB")
+;; 
+;; (set-variable 'load-path (append load-path (list nil (substitute-in-file-name "$CM_UNIX_HOME/emacs"))))
+;; (load-library "cm")
+;; (load-library "cm-hide")
+;; 
+;; (setq cm-ac-menu-lines 10)
 
 (require 'citre)
 (require 'citre-config)
