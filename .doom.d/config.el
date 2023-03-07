@@ -55,6 +55,8 @@
 ;; change `org-directory'. It must be set before org loads!
 (setq org-directory "~/org/")
 
+
+
 (setq
  doom-font (font-spec :family "Ubuntu Mono" :size 18)
  doom-variable-pitch-font (font-spec :family "Ubuntu" :size 18))
