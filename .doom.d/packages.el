@@ -58,3 +58,4 @@
 (package! yasnippet)
 (package! modus-themes)
 (package! bitbake)
+(package! citre)
