@@ -57,6 +57,8 @@
 (package! beacon)
 (package! yasnippet)
 (package! modus-themes)
+(package! bitbake)
+(package! citre)
 ;;(package! tree-sitter-langs)
 (package! vertico)
 

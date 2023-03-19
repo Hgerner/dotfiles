@@ -33,6 +33,20 @@
 ;; refresh your font settings. If Emacs still can't find your font, it likely
 ;; wasn't installed correctly. Font issues are rarely Doom issues!
 
+;; (defvar cm-ac-enable t
+;;   "enable cm auto complete on TAB")
+;; 
+;; (defvar cm-ac-menu-lines 20
+;;   "enable cm auto complete on TAB")
+;; 
+;; (set-variable 'load-path (append load-path (list nil (substitute-in-file-name "$CM_UNIX_HOME/emacs"))))
+;; (load-library "cm")
+;; (load-library "cm-hide")
+;; 
+;; (setq cm-ac-menu-lines 10)
+
+(require 'citre)
+(require 'citre-config)
 
 ;; `load-theme' function. This is the default:
 (setq doom-theme 'doom-one)
@@ -48,12 +62,17 @@
 
 
 (setq
- doom-font (font-spec :family "Ubuntu Mono" :size 20)
- doom-variable-pitch-font (font-spec :family "Ubuntu" :size 20))
+ doom-font (font-spec :family "Ubuntu Mono" :size 18)
+ doom-variable-pitch-font (font-spec :family "Ubuntu" :size 18))
 
 (after! doom-themes--colors
   (setq doom-themes-enable-bold t
         doom-themes-enable-italic t))
+
+(add-to-list 'auto-mode-alist '("\\.bb\\'" . bitbake-mode))
+(add-to-list 'auto-mode-alist '("\\.bbclass\\'" . bitbake-mode))
+
+(add-hook 'after-save-hook 'magit-after-save-refresh-status t)
 
 (custom-set-faces!
   '(font-lock-comment-face :slant italic)
@@ -66,12 +85,35 @@
  projectile-project-search-path '("~/github/yocto/poky", "~/.config/")
  )
 
+(defun my/prelude-copy-filepath-clipboard ()
+  "Copy the current buffer file name to the clipboard."
+  (interactive)
+  (let ((filename (if (equal major-mode 'dired-mode)
+                      default-directory
+                    (buffer-file-name))))
+    (when filename
+      (kill-new filename))
+    (message filename)))
+
 (set-face-attribute 'lazy-highlight nil :foreground "black" :background "green")
 
 ;;(require 'yasnippet)
 ;;(yas-global-mode 1)
 (blink-cursor-mode 1)
 (beacon-mode 1)
+
+(org-babel-do-load-languages 'org-babel-load-languages '((shell . t)))
+
+(setq max-specpdl-size 13000)
+
+(setq-default indent-tabs-mode nil)
+(setq-default tab-width 4)
+;; (setq indent-line-function 'insert-tab)
+
+(add-hook 'dired-mode-hook
+      (lambda ()
+        (dired-hide-details-mode)
+        (dired-sort-toggle-or-edit)))
 
 (org-babel-do-load-languages
   'org-babel-load-languages
@@ -160,12 +202,9 @@
          (font-lock-mode 1)
          ))
 
-
-
 (setq-default indent-tabs-mode nil)
 (setq-default tab-width 4)
 (setq indent-line-function 'insert-tab)
-
 
 (use-package! tree-sitter
   :config
