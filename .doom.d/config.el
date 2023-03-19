@@ -1,3 +1,7 @@
+;;; Pre-requisites
+;;; apt install pandoc ripgrep
+
+
 ;;; $DOOMDIR/config.el -*- lexical-binding: t; -*-
 
 ;; Place your private configuration here! Remember, you do not need to run 'doom
@@ -6,8 +10,8 @@
 
 ;; Some functionality uses this to identify you, e.g. GPG configuration, email
 ;; clients, file templates and snippets. It is optional.
-(setq user-full-name "John Doe"
-      user-mail-address "john@doe.com")
+(setq user-full-name "Håkan Gerner"
+      user-mail-address "hakan.gerner@ctek.com")
 
 ;; Doom exposes five (optional) variables for controlling fonts in Doom:
 ;;
@@ -168,6 +172,8 @@
   (require 'tree-sitter-langs)
   (global-tree-sitter-mode)
   (add-hook 'tree-sitter-after-on-hook #'tree-sitter-hl-mode))
+
+(use-package! org-pandoc-import :after org)
 
 (setq doom-theme 'doom-moonlight)
 

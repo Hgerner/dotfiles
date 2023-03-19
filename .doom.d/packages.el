@@ -59,3 +59,8 @@
 (package! modus-themes)
 ;;(package! tree-sitter-langs)
 (package! vertico)
+
+(package! org-pandoc-import
+  :recipe (:host github
+           :repo "tecosaur/org-pandoc-import"
+           :files ("*.el" "filters" "preprocessors")))
