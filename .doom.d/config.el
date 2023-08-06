@@ -1,5 +1,8 @@
 ;;; $DOOMDIR/config.el -*- lexical-binding: t; -*-
 
+(setenv "PATH" (concat ".:/home/hakan/.npm-global/bin" (getenv "PATH")))
+(setq exec-path (append exec-path '( "/home/hakan/.npm-global/bin")))
+
 ;; Place your private configuration here! Remember, you do not need to run 'doom
 ;; sync' after modifying this file!
 
@@ -41,8 +44,8 @@
 ;; 
 ;; (setq cm-ac-menu-lines 10)
 
-(require 'citre)
-(require 'citre-config)
+;; (require 'citre)
+;; (require 'citre-config)
 
 ;; `load-theme' function. This is the default:
 (setq doom-theme 'doom-one)
@@ -102,8 +105,7 @@
 
 (setq max-specpdl-size 13000)
 
-(setq-default indent-tabs-mode nil)
-(setq-default tab-width 4)
+
 ;; (setq indent-line-function 'insert-tab)
 
 (add-hook 'dired-mode-hook
@@ -117,90 +119,33 @@
     (python . t)
     (shell . t)))
 
-(defconst my-c-style
-    '((c-recognize-knr-p          . nil)
-      (c-tab-always-indent        . t)
-      (c-basic-offset             . 4)
-      (c-comment-only-line-offset . 0)
-      (c-hanging-braces-alist     . ((block-close . c-snug-do-while)
-                                     (brace-entry-open)
-                                     (brace-list-close)
-                                     (brace-list-open after)
-                                     (brace-list-intro)
-                                     (class-open after)
-                                     (class-close before)
-                                     (extern-lang-open after)
-                                     (inexpr-class-open after)
-                                     (inexpr-class-close before)
-                                     (inline-open after)
-                                     (inline-close before)
-                                     (statement-cont)
-                                     (substatement-open after)))
-      (c-hanging-colons-alist     . ((member-init-intro before)
-                                     (inher-intro)
-                                     (case-label after)
-                                     (label after)
-                                     (access-label after)))
-      (c-cleanup-list             . (scope-operator
-                                     empty-defun-braces
-                                     defun-close-semi))
-      (c-offsets-alist            . ((access-label . -)
-                                     (brace-list-close . 0)
-                                     (brace-list-entry . 0)
-                                     (brace-list-intro . +)
-                                     (class-close . 0)
-                                     (class-open . 0)
-                                     (defun-block-intro . +)
-                                     (defun-close . 0)
-                                     (defun-open . 0)
-                                     (inclass . +)
-                                     (label . 0)
-                                     (statement . 0)
-                                     (statement-cont . *)
-                                     (topmost-intro-cont . 0)
-                                     (arglist-close . c-lineup-arglist)
-                                     (block-open . 0)
-                                     (case-label . +)
-                                     (func-decl-cont . c-lineup-java-throws)
-                                     (inexpr-class . 0)
-                                     (inher-cont . c-lineup-java-inher)
-                                     (inline-open . 0)
-                                     (substatement-open . 0)
-                                     (innamespace . 0)
-                                     ))
-      (c-echo-syntactic-information-p . t))
-    "My C Programming Style")
-;; Offset customizations not in my-c-style
-(setq c-offsets-alist '((member-init-intro . ++)))
-;; Customizations for all modes in CC Mode.
-(defun my-c-mode-common-hook ()
-  ;; add my personal style and set it for the current buffer
-  (c-add-style "PERSONAL" my-c-style t)
-  ;; other customizations
-  (setq tab-width 4)
-  ;; we like auto-newline and hungry-delete
-  (c-toggle-auto-hungry-state 1)
-  ;; keybindings for all supported languages.  We can put these in
-  ;; c-mode-base-map because c-mode-map, c++-mode-map, objc-mode-map,
-  ;; java-mode-map, idl-mode-map, and pike-mode-map inherit from it.
-  (define-key c-mode-base-map "\C-m" 'newline-and-indent)
-  (define-key c-mode-base-map "\M-a" 'backward-sexp)
-  (define-key c-mode-base-map "\M-e" 'forward-sexp)
-  )
+(global-set-key (kbd "C-'") 'goto-last-change)
+(global-set-key (kbd "C-S-2") 'goto-last-change)
 
-(add-hook 'c-mode-common-hook 'my-c-mode-common-hook)
-(setq c++-mode-hook
-      '(lambda ()
-         (font-lock-mode 1)
-         ))
-(setq java-mode-hook
-      '(lambda ()
-         (font-lock-mode 1)
-         ))
+;; Set custom indentation (e.g., 4 spaces)
+(defun my-custom-c-style ()
+  (setq c-basic-offset 4))
+
+(require 'google-c-style)
+(add-hook 'c-mode-common-hook 'google-set-c-style)
+(add-hook 'c-mode-common-hook 'google-make-newline-indent)
+(add-hook 'c-mode-common-hook 'my-custom-c-style)
+
+;; Remove conflicting c-basic-offset value set by Google C Style
+(eval-after-load 'google-c-style
+  '(setq-default c-basic-offset 4))
 
 (setq-default indent-tabs-mode nil)
 (setq-default tab-width 4)
-(setq indent-line-function 'insert-tab)
+(setq-default c-basic-offset 4)
+
+
+(use-package company
+  :bind (:map company-active-map
+         ("<tab>" . company-complete-selection))
+  :custom
+  (company-minimum-prefix-length 1)
+  (company-idle-delay 0.0))
 
 (use-package! tree-sitter
   :config
