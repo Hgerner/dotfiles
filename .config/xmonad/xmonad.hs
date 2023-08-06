@@ -1,49 +1,21 @@
---
--- xmonad example config file.
---
--- A template showing all available configuration hooks,
--- and how to override the defaults in your own xmonad.hs conf file.
---
--- Normally, you'd only override those defaults you care about.
---
-
-
--- https://github.com/brianbuccola/dotfiles/blob/main/xmonad/.xmonad/xmonad.hs
+-- Dependencies:
+-- Alacritty
+-- Rofi
+-- Fonts defined in xmobar
 
 import XMonad
 import Data.Monoid
-import System.Exit
-import XMonad.Util.NamedScratchpad
-
-import System.IO (hClose, hPutStr, hPutStrLn)
--- Lookup
-import XMonad.Hooks.EwmhDesktops      -- use EWMH hints
-import XMonad.Hooks.UrgencyHook       -- colorize urgent WSs
-import XMonad.Actions.DynamicProjects -- make WSs projects, dynamically create, rename, move projects
-
 import Graphics.X11.ExtraTypes.XF86   -- bind media keys
--- Added by me
-import XMonad.Layout.Spacing
-import XMonad.Util.EZConfig
-import XMonad.Layout.IndependentScreens
-    -- Layouts modifiers
-import XMonad.Layout.LayoutModifier
-import XMonad.Layout.LimitWindows (limitWindows, increaseLimit, decreaseLimit)
-import XMonad.Layout.MultiToggle (mkToggle, single, EOT(EOT), (??))
-import XMonad.Layout.MultiToggle.Instances (StdTransformers(NBFULL, MIRROR, NOBORDERS))
-import XMonad.Layout.NoBorders
-import XMonad.Layout.Renamed
-import XMonad.Layout.ShowWName
-import XMonad.Layout.Simplest
-import XMonad.Layout.Spacing
-import XMonad.Layout.SubLayouts
-import XMonad.Layout.WindowArranger (windowArrange, WindowArrangerMsg(..))
-import XMonad.Layout.WindowNavigation
-import qualified XMonad.Layout.ToggleLayouts as T (toggleLayouts, ToggleLayout(Toggle))
-import qualified XMonad.Layout.MultiToggle as MT (Toggle(..))
+import Graphics.X11.Xinerama (getScreenInfo)
+import System.Exit
+import System.IO (hClose, hPutStr, hPutStrLn)
 
     -- Actions
+import XMonad.Actions.OnScreen (onlyOnScreen)
+import XMonad.Actions.DynamicProjects -- make WSs projects, dynamically create, rename, move projects
+import XMonad.Actions.Warp (warpToScreen)
 import XMonad.Actions.CopyWindow (kill1)
+import XMonad.Actions.SpawnOn
 import XMonad.Actions.CycleWS (Direction1D(..), moveTo, shiftTo, WSType(..), nextScreen, prevScreen)
 import XMonad.Actions.GridSelect
 import XMonad.Actions.MouseResize
@@ -53,16 +25,36 @@ import XMonad.Actions.WindowGo (runOrRaise)
 import XMonad.Actions.WithAll (sinkAll, killAll)
 import qualified XMonad.Actions.Search as S
 
-import XMonad.Util.SpawnOnce
-import XMonad.Actions.SpawnOn
+       -- Layouts modifiers
+import XMonad.Layout.IndependentScreens
+import XMonad.Layout.Spacing
+import XMonad.Layout.LayoutModifier
+import XMonad.Layout.LimitWindows (limitWindows, increaseLimit, decreaseLimit)
+import XMonad.Layout.MultiToggle (mkToggle, single, EOT(EOT), (??))
+import XMonad.Layout.MultiToggle.Instances (StdTransformers(NBFULL, MIRROR, NOBORDERS))
+import XMonad.Layout.NoBorders
+import XMonad.Layout.Renamed
+import XMonad.Layout.ShowWName
+import XMonad.Layout.Simplest
+import XMonad.Layout.Grid
+import XMonad.Layout.ThreeColumns
+import XMonad.Layout.Spacing
+import XMonad.Layout.SubLayouts
+import XMonad.Layout.WindowArranger (windowArrange, WindowArrangerMsg(..))
+import XMonad.Layout.WindowNavigation
+import qualified XMonad.Layout.ToggleLayouts as T (toggleLayouts, ToggleLayout(Toggle))
+import qualified XMonad.Layout.MultiToggle as MT (Toggle(..))
+
+import XMonad.Util.NamedScratchpad
 import XMonad.Util.Run
+import XMonad.Util.EZConfig
+import XMonad.Util.SpawnOnce
+
 import XMonad.Hooks.ManageDocks (avoidStruts, docks, manageDocks, ToggleStruts(..))
 import XMonad.Hooks.StatusBar
 import XMonad.Hooks.StatusBar.PP
-import Graphics.X11.Xinerama (getScreenInfo)
-
-import XMonad.Actions.OnScreen (onlyOnScreen)
-import XMonad.Actions.Warp (warpToScreen)
+import XMonad.Hooks.EwmhDesktops
+import XMonad.Hooks.UrgencyHook
 
 import qualified XMonad.StackSet as W
 import qualified Data.Map        as M
@@ -71,8 +63,8 @@ import Colors.GruvboxDark
 
 main = do
   mySB0 <- spawnPipe ("xmobar -x 0 $HOME/.config/xmobar/xmobar0.hs")
-  mySB1 <- spawnPipe ("xmobar -x 1 $HOME/.config/xmobar/xmobar1.hs")
-  mySB2 <- spawnPipe ("xmobar -x 2 $HOME/.config/xmobar/xmobar2.hs")
+  mySB1 <- spawnPipe ("xmobar -x 1 $HOME/.config/xmobar/xmobar0.hs")
+  mySB2 <- spawnPipe ("xmobar -x 2 $HOME/.config/xmobar/xmobar0.hs")
   xmonad $ docks $ ewmh $ ewmhFullscreen $ withUrgencyHook NoUrgencyHook def
     { terminal           = "alacritty"
     , modMask            = mod4Mask
@@ -89,61 +81,72 @@ main = do
         { ppOutput = \x -> hPutStrLn mySB0 x   -- xmobar on monitor 1
                         >> hPutStrLn mySB1 x   -- xmobar on monitor 2
                         >> hPutStrLn mySB2 x   -- xmobar on monitor 3
-        , ppCurrent = xmobarColor myBrightYellow "" . wrap "<box width=1> " " </box>"
-        , ppVisible = xmobarColor myBlue "" . wrap "<box width=1> " " </box>"
-        , ppHidden  = xmobarColor myBrightRed "" . pad
-        , ppHiddenNoWindows = xmobarColor myBrightRed "" . pad
-        , ppUrgent  = xmobarColor myBrightYellow myRed . wrap " " " "
-        , ppSep     = ""
-        , ppWsSep   = ""
-        , ppTitle   = xmobarColor myBrightGreen "" . pad
-        , ppLayout  = xmobarColor myBrightMagenta ""
+        , ppCurrent = xmobarColor "#ff79c6" "" . currentWorkspace
+        , ppVisible = xmobarColor "#d4bfff" "" . occupiedWorkspace
+        , ppHidden = xmobarColor "#d4bfff" "" . occupiedWorkspace
+        , ppHiddenNoWindows = xmobarColor "#d4bfff" "" . occupiedWorkspace
+        , ppSep =  "<fc=#212733>    </fc>"
+        , ppWsSep =  "<fc=#212733> </fc>"
+        , ppTitle = xmobarColor myWhite "" . pad
         }
     } `additionalKeysP` myAdditionalKeys
 
-
+myFont :: String
 myFont = "xft:Dina:size=12"
 
--- The preferred default programs, which is used in a binding below and by
+-- Preferred programs
 myBrowser :: String
-myBrowser      = "firefox"  -- Sets qutebrowser as browser
+myBrowser = "firefox"
 
 myMusicplayer :: String
-myMusicplayer  = "spotify"
+myMusicplayer = "spotify"
 
 myEditor :: String
-myEditor       = "emacsclient -c"
+myEditor = "emacsclient -c"
 
 myTerminal :: String
-myTerminal     = "alacritty"
+myTerminal = "alacritty"
 
 myComms :: String
-myComms        = "discord"
+myComms = "discord"
 
 myApplauncher :: String
-myApplauncher  = "dmenu_run"
+myApplauncher = "rofi -show run -theme gruvbox-dark"
 
--- Other configuration options
-myWorkspaces :: [ String ]
-myWorkspaces = [ "1: emacs", "2: shell", "3: comms", "4: web", "5: media" ]
+-- Workspaces
+currentWorkspace :: String -> String
+currentWorkspace  _ = "<fn=2>\61713</fn>"
+
+occupiedWorkspace :: String -> String
+occupiedWorkspace  _ = "<fn=3>\61713</fn>"
+
+xmobarEscape :: String -> String
+xmobarEscape = concatMap doubleLts
+    where
+        doubleLts x = [x]
+
+myWorkspaces :: [String]
+myWorkspaces = (map xmobarEscape) $ ["1", "2", "3", "4", "5" ]
 
 windowCount :: X (Maybe String)
 windowCount = gets $ Just . show . length . W.integrate' . W.stack . W.workspace . W.current . windowset
 
+-- Mouse behavior
 myFocusFollowsMouse :: Bool
 myFocusFollowsMouse = True
 
 myClickJustFocuses :: Bool
 myClickJustFocuses = False
 
--- Width of the window border in pixels.
---
+-- Border properties
 myBorderWidth   = 3
-myNormalBorderColor  = myBlack
+myNormalBorderColor  = myBlue
 myFocusedBorderColor = myBrightYellow
 
+-- Default modmask -- mod4Mask = WinKey
 myModMask       = mod4Mask
 
+-- Keymap
 myAdditionalKeys :: [(String, X ())]
 myAdditionalKeys =
     [
@@ -221,6 +224,12 @@ myMouseBindings (XConfig {XMonad.modMask = modm}) = M.fromList $
 ------------------------------------------------------------------------
 -- Layouts:
 
+------------------------------------------------------------------------
+-- Space between Tiling Windows
+------------------------------------------------------------------------
+mySpacing :: Integer -> l a -> XMonad.Layout.LayoutModifier.ModifiedLayout Spacing l a
+mySpacing i = spacingRaw False (Border i i i i) True (Border i i i i) True
+
 -- You can specify and transform your layouts by modifying these values.
 -- If you change layout bindings be sure to use 'mod-shift-space' after
 -- restarting (with 'mod-q') to reset your layout state to the new
@@ -229,21 +238,22 @@ myMouseBindings (XConfig {XMonad.modMask = modm}) = M.fromList $
 -- The available layouts.  Note that each layout is separated by |||,
 -- which denotes layout choice.
 --
-myLayoutHook = spacing 2
-               $ avoidStruts
-               $ mkToggle (NOBORDERS ?? NBFULL ?? EOT) (tiled ||| Mirror tiled)
+myLayoutHook = avoidStruts
+               $ mkToggle (NOBORDERS ?? NBFULL ?? EOT) (tiled ||| Mirror tiled ||| grid ||| threecolumns)
   where
      -- default tiling algorithm partitions the screen into two panes
-     tiled   = Tall nmaster delta ratio
-
-     -- The default number of windows in the master pane
-     nmaster = 1
-
-     -- Default proportion of screen occupied by master pane
-     ratio   = 1/2
-
-     -- Percent of screen to increment by when resizing panes
-     delta   = 10/100
+    tiled   = renamed [Replace "Tall"]
+     $ mySpacing 2
+     $ Tall nmaster delta ratio
+    grid = renamed [Replace " Grid"]
+     $ mySpacing 2
+     $ Grid
+    threecolumns = renamed [Replace " ThreeCols"]
+     $ mySpacing 2
+     $ ThreeCol nmaster delta ratio
+    nmaster = 1
+    ratio   = 1/3
+    delta   = 20/100
 
 ------------------------------------------------------------------------
 -- Window rules:
@@ -265,10 +275,7 @@ myManageHook = composeAll
     , className =? "Gimp"           --> doFloat
     , resource  =? "desktop_window" --> doIgnore
     , resource  =? "kdesktop"       --> doIgnore
-    , className  =?  "emacsclient" --> doShift (myWorkspaces !! 0 )
-    , className  =?  "discord" --> doShift (myWorkspaces !! 2 )
-    , className  =?  "firefox" --> doShift (myWorkspaces !! 3 )
-    , className  =?  "spotify" --> doShift (myWorkspaces !! 3 )]
+    ]
 
 ------------------------------------------------------------------------
 -- Event handling
@@ -284,12 +291,5 @@ myEventHook = mempty
 myStartupHook = do
               spawnOnce "nitrogen --restore &"
               spawnOnce "compton &"
-              spawn "/usr/local/bin/emacs --daemon" -- emacs daemon for the emacsclient
-              spawn "/usr/share/lightdmxrandr.sh"
-              -- spawnOn "code" myEditor
-              -- spawnOn "shell" myTerminal
-              -- spawnOn "shell" myTerminal
-              -- spawnOn "shell" myTerminal
-              -- spawnOn "comms" myComms
-              -- spawnOn "web" myBrowser
-              -- spawnOn "media" myMusicplayer
+              spawnOnce "/usr/local/bin/emacs --daemon" -- emacs daemon for the emacsclient
+              spawnOnce "/usr/share/lightdmxrandr.sh"
