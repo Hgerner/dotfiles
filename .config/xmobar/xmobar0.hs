@@ -1,5 +1,8 @@
-Config { font = "xft:Ubuntu Mono:pixelsize=16:antialias=true:hinting=true"
-       , additionalFonts = []
+Config { font    = "xft:Ubuntu:weight=bold:pixelsize=16:antialias=true:hinting=true,Font Awesome 5 Free Regular:pixelsize=14"
+       , additionalFonts = [ "xft:Mononoki Nerd Font:pixelsize=13:antialias=true:hinting=true"
+                           , "xft:Font Awesome 6 Free Solid:pixelsize=13"
+                           , "xft:Font Awesome 6 Free Regular:pixelsize=13"
+                           ]
        , borderColor = "black"
        , border = TopB
        , bgColor = "black"
@@ -17,8 +20,17 @@ Config { font = "xft:Ubuntu Mono:pixelsize=16:antialias=true:hinting=true"
        , overrideRedirect = True
        , commands = [
              Run UnsafeStdinReader --Run UnsafeXPropertyLog
-           , Run Network "enp34s0" ["-L","0","-H","32",
-                                 "--normal","green","--high","red"] 10
+           , Run Network "wlp2s0" [
+               "-L","0","-H","32",
+               "--normal","green","--high","red"] 10
+           , Run Battery [
+	       "-t", "<acstatus>: <left>% - <timeleft>",
+	         "--",
+	         "-O", "AC",
+	         "-o", "Bat",
+	         "-h", "green",
+	         "-l", "red"
+	       ] 100
            , Run Cpu ["-L","3","-H","50",
                       "--normal","green","--high","red"] 10
            , Run Memory ["-t","Mem: <usedratio>%"] 10
@@ -28,5 +40,5 @@ Config { font = "xft:Ubuntu Mono:pixelsize=16:antialias=true:hinting=true"
                     ]
        , sepChar = "%"
        , alignSep = "}{"
-       , template = "%UnsafeStdinReader% } { %cpu% | %memory% | %enp34s0% | <fc=#ee9a00>%date%</fc>"
+       , template = "%UnsafeStdinReader% } { %cpu% | %battery% | %memory% | %wlp2s0% | <fc=#ee9a00>%date%</fc>"
 	}
