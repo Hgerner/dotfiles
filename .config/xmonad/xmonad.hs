@@ -11,6 +11,7 @@ import System.Exit
 import System.IO (hClose, hPutStr, hPutStrLn)
 
     -- Actions
+import XMonad.Actions.Navigation2D
 import XMonad.Actions.OnScreen (onlyOnScreen)
 import XMonad.Actions.DynamicProjects -- make WSs projects, dynamically create, rename, move projects
 import XMonad.Actions.Warp (warpToScreen)
@@ -41,7 +42,6 @@ import XMonad.Layout.ThreeColumns
 import XMonad.Layout.Spacing
 import XMonad.Layout.SubLayouts
 import XMonad.Layout.WindowArranger (windowArrange, WindowArrangerMsg(..))
-import XMonad.Layout.WindowNavigation
 import qualified XMonad.Layout.ToggleLayouts as T (toggleLayouts, ToggleLayout(Toggle))
 import qualified XMonad.Layout.MultiToggle as MT (Toggle(..))
 
@@ -65,7 +65,15 @@ main = do
   mySB0 <- spawnPipe ("xmobar -x 0 $HOME/.config/xmobar/xmobar0.hs")
   mySB1 <- spawnPipe ("xmobar -x 1 $HOME/.config/xmobar/xmobar0.hs")
   mySB2 <- spawnPipe ("xmobar -x 2 $HOME/.config/xmobar/xmobar0.hs")
-  xmonad $ docks $ ewmh $ ewmhFullscreen $ withUrgencyHook NoUrgencyHook def
+  xmonad $ navigation2DP def
+                        ("<Up>", "<Left>", "<Down>", "<Right>")
+                       [("M-C-",   windowGo  ),
+                        ("M-C-S-", windowSwap)]
+                       False
+    $ docks
+    $ ewmh
+    $ ewmhFullscreen
+    $ withUrgencyHook NoUrgencyHook def
     { terminal           = "alacritty"
     , modMask            = mod4Mask
     , borderWidth        = myBorderWidth
@@ -109,6 +117,9 @@ myTerminal = "alacritty"
 
 myComms :: String
 myComms = "discord"
+
+myScreenshot :: String
+myScreenshot = "flameshot gui"
 
 myApplauncher :: String
 myApplauncher = "rofi -show run -theme gruvbox-dark"
@@ -156,13 +167,17 @@ myAdditionalKeys =
     , ("M-C-n",                refresh)
     , ("M-C-<Tab>",            sendMessage NextLayout)
 
+-- Window navigation keymap for Navigation2D configured in main
 -- Window control
-    , ("M-C-<Down>",           windows W.focusDown)
-    , ("M-C-<Up>",             windows W.focusUp)
-    , ("M-C-S-<Down>",         windows W.swapDown)
-    , ("M-C-S-<Up>",           windows W.swapUp)
-    , ("M-C-<Left>",           windows W.focusMaster)
-    --, ("M-C-<Right>",          windows W.focus)
+--    , ("M-C-<Left>",           sendMessage $ Go L)
+--    , ("M-C-<Right>",          sendMessage $ Go R)
+--    , ("M-C-<Up>",             sendMessage $ Go U)
+--    , ("M-C-<Down>",           sendMessage $ Go D)
+--    , ("M-C-S-<Left>",         sendMessage $ Swap L)
+--    , ("M-C-S-<Right>",        sendMessage $ Swap R)
+--    , ("M-C-S-<Up>",           sendMessage $ Swap U)
+--    , ("M-C-S-<Down>",         sendMessage $ Swap D)
+
     , ("M-C-<Backspace>",      windows W.swapMaster)
     , ("M-C-m",                sendMessage Expand)
     , ("M-C-k",                sendMessage Shrink)
@@ -174,10 +189,10 @@ myAdditionalKeys =
 
 -- Applications
     , ("M-e",                  spawn myEditor)
-    , ("M-l",                  spawn myTerminal)
+    , ("M-s",                  spawn myScreenshot)
     , ("M-d",                  spawn myComms)
     , ("M-b",                  spawn myBrowser)
-    , ("M-s",                  spawn myMusicplayer)
+    , ("M-m",                  spawn myMusicplayer)
     , ("M-C-<Return>",         spawn myTerminal)
     , ("M-S-C-<Return>",       spawn myApplauncher)
     ]
@@ -239,7 +254,7 @@ mySpacing i = spacingRaw False (Border i i i i) True (Border i i i i) True
 -- which denotes layout choice.
 --
 myLayoutHook = avoidStruts
-               $ mkToggle (NOBORDERS ?? NBFULL ?? EOT) (tiled ||| Mirror tiled ||| grid ||| threecolumns)
+               $ mkToggle (NOBORDERS ?? NBFULL ?? EOT) (grid ||| tiled ||| Mirror tiled)
   where
      -- default tiling algorithm partitions the screen into two panes
     tiled   = renamed [Replace "Tall"]
@@ -273,6 +288,7 @@ myLayoutHook = avoidStruts
 myManageHook = composeAll
     [ className =? "MPlayer"        --> doFloat
     , className =? "Gimp"           --> doFloat
+    , className =? "Spotify"           --> doFloat
     , resource  =? "desktop_window" --> doIgnore
     , resource  =? "kdesktop"       --> doIgnore
     ]
